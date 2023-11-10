@@ -14,6 +14,7 @@ const userSchema = mongoose.Schema({
     required: [true, "this field is required"],
     maxlength: [20],
     minlength: [3],
+    select: false,
   },
   passwordConfirm: {
     type: String,
@@ -42,5 +43,12 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
 });
+
+userSchema.methods.CheckPassword = async function (
+  candidatePassword,
+  userpassword
+) {
+  return await bcrypt.compare(candidatePassword, userpassword);
+};
 const User = mongoose.model("user", userSchema);
 module.exports = User;
