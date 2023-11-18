@@ -9,6 +9,13 @@ const handlecasterr = (err) => {
   return new AppError(`invaild ${err.value} for ${err.path}`, 400);
 };
 
+const handleJWTExp = () => {
+  return new AppError("your login has expired plz login again", 400);
+};
+
+const handleJWTErorr = () => {
+  return new AppError("invaild token plz login again ", 400);
+};
 const Errordev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -42,6 +49,10 @@ module.exports = (err, req, res, next) => {
       err = handlevalidationerr(err);
     } else if (err.name === "CastError") {
       err = handlecasterr(err);
+    } else if (err.name === "TokenExpiredError") {
+      err = handleJWTExp();
+    } else if (err.name === "JsonWebTokenError") {
+      err = handleJWTErorr();
     }
     Errorprod(err, res);
   }

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const userSchema = mongoose.Schema({
   name: {
     type: String,
@@ -37,7 +38,11 @@ const userSchema = mongoose.Schema({
       message: "it must be male or female",
     },
   },
+  PasswordChangeAt: Date,
+  RestToken: String,
+  RestTokenExp: String,
 });
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
@@ -50,5 +55,21 @@ userSchema.methods.CheckPassword = async function (
 ) {
   return await bcrypt.compare(candidatePassword, userpassword);
 };
+
+userSchema.methods.isPasswordChange = function (JWTTimeStamp) {
+  if (this.PasswordChangeAt) {
+    const TimeChange = parseInt(this.PasswordChangeAt.getTime() / 1000, 10);
+    return JWTTimeStamp < TimeChange;
+  }
+  return false;
+};
+
+userSchema.methods.passwordRestToken = function () {
+  const token = crypto.randomBytes(64).toString("hex");
+  this.RestToken = crypto.createHash("sha256").update(token).digest("hex");
+  this.RestTokenExp = Date.now() + 10 * 60 * 1000;
+  return token;
+};
+
 const User = mongoose.model("user", userSchema);
 module.exports = User;
