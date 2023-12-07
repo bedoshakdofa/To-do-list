@@ -8,6 +8,7 @@ Router.route("/")
   .get(userController.protect, taskController.getAllTask);
 
 Router.route("/:id")
+  .get(userController.protect, taskController.getOneTask)
   .delete(userController.protect, taskController.deleteTask)
   .patch(userController.protect, taskController.updateTask);
 module.exports = Router;

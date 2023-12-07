@@ -12,12 +12,18 @@ const taskSchema = new mongoose.Schema({
   },
   content: {
     type: String,
+
     required: [true],
   },
   checked: {
     type: Boolean,
     default: false,
   },
+  userID: {
+    type: mongoose.Types.ObjectId,
+    ref: "user",
+  },
 });
+
 const task = mongoose.model("task", taskSchema);
 module.exports = task;
