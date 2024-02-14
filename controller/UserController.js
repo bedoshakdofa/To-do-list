@@ -12,6 +12,26 @@ const signToken = (id) => {
     });
 };
 
+const createSendCookie = (user, status, res) => {
+    const token = signToken(user._id);
+    const cookieOption = {
+        expiresIn: new Date(
+            Date.now() + process.env.JWT_EXP_IN * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true,
+    };
+    if (process.env.NODE_ENV === "production") cookieOption.secure = true;
+    res.cookie("jwt", token, cookieOption);
+    user.password = undefined;
+    res.status(status).json({
+        status: "success",
+        data: {
+            token,
+            user,
+        },
+    });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
     const newuser = await User.create({
         email: req.body.email,
@@ -57,16 +77,7 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
     }
     currantuser.active = true;
     await currantuser.save({ validateBeforeSave: false });
-
-    const token = signToken(currantuser._id);
-    res.status(200).json({
-        status: "success",
-        token,
-        data: {
-            name: currantuser.name,
-            email: currantuser.email,
-        },
-    });
+    createSendCookie(currantuser, 200, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -80,12 +91,21 @@ exports.login = catchAsync(async (req, res, next) => {
     if (!user || !(await user.CheckPassword(password, user.password)))
         return next(new AppError("invaild email or password", 400));
 
-    const token = signToken(user._id);
+    createSendCookie(user, 200, res);
+});
+
+exports.LogOut = (req, res) => {
+    const cookieOption = {
+        httpOnly: true,
+    };
+    if (process.env.NODE_ENV === "production") {
+        cookieOption.secure = true;
+    }
+    res.clearCookie("jwt", cookieOption);
     res.status(200).json({
         status: "success",
-        token,
     });
-});
+};
 
 exports.protect = catchAsync(async (req, res, next) => {
     //fisrt seek for token in request
@@ -95,6 +115,8 @@ exports.protect = catchAsync(async (req, res, next) => {
         req.headers.authorization.startsWith("Bearer")
     ) {
         token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies.jwt) {
+        token = req.cookies.jwt;
     }
     //if not found raise an error
     if (!token) {
@@ -215,6 +237,16 @@ exports.UpdatePassword = catchAsync(async (req, res, next) => {
         token,
         data: {
             currantuser,
+        },
+    });
+});
+
+exports.getMe = catchAsync(async (req, res) => {
+    const Me = await User.findById(req.user.id);
+    res.status(200).json({
+        status: "success",
+        data: {
+            user: Me,
         },
     });
 });

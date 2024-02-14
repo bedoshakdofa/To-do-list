@@ -3,17 +3,15 @@ const taskController = require("../controller/TaskController");
 const userController = require("./../controller/UserController");
 const Router = express.Router();
 
+Router.use(userController.protect);
 Router.route("/")
-    .post(userController.protect, taskController.createTask)
-    .get(userController.protect, taskController.getAllTask);
+    .post(taskController.createTask)
+    .get(taskController.getAllTask);
 
 Router.route("/:id")
-    .get(userController.protect, taskController.getOneTask)
-    .delete(userController.protect, taskController.deleteTask)
-    .patch(userController.protect, taskController.updateTask);
+    .get(taskController.getOneTask)
+    .delete(taskController.deleteTask)
+    .patch(taskController.updateTask);
 
-Router.route("/search").post(
-    userController.protect,
-    taskController.searchtasks
-);
+Router.route("/search").post(taskController.searchtasks);
 module.exports = Router;
