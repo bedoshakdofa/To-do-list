@@ -41,9 +41,10 @@ exports.signup = catchAsync(async (req, res, next) => {
         gender: req.body.gender,
     });
 
+    const token = newuser.RandomToken();
     const URL = `${req.protocol}://${req.get(
         "host"
-    )}/api/v1/users/confirmEmail/${newuser.email}`;
+    )}/api/v1/users/confirmEmail/${token}`;
     const message = `validate your Email 
   click on this link to activate your account: ${URL}.`;
 
@@ -59,7 +60,8 @@ exports.signup = catchAsync(async (req, res, next) => {
             message: "your email has been sent check your inbox",
         });
     } catch (err) {
-        await User.deleteOne({ email: newuser.email });
+        this.Token = undefined;
+        this.TokenExp = undefined;
         return next(
             new AppError(
                 "there was error in sending this email plz try later!!!!",
@@ -70,14 +72,16 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.confirmEmail = catchAsync(async (req, res, next) => {
-    const currantuser = await User.findOne({ email: req.params.Email });
-
-    if (!currantuser) {
-        return next(new AppError("your are not signup plz signup", 401));
-    }
-    currantuser.active = true;
-    await currantuser.save({ validateBeforeSave: false });
-    createSendCookie(currantuser, 200, res);
+    const token = crypto
+        .createHash("sha256")
+        .update(req.params.token)
+        .digest("hex");
+    const user = await User.find({ Token: token });
+    if (!user) return next(new AppError(404, "this user is not found"));
+    user.active = true;
+    user.Token = undefined;
+    user.TokenExp = undefined;
+    createSendCookie(user, 200, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {

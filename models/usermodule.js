@@ -43,8 +43,8 @@ const userSchema = mongoose.Schema({
         default: false,
     },
     PasswordChangeAt: Date,
-    RestToken: String,
-    RestTokenExp: String,
+    Token: String,
+    TokenExp: String,
 });
 
 userSchema.pre("save", async function (next) {
@@ -73,10 +73,10 @@ userSchema.methods.isPasswordChange = function (JWTTimeStamp) {
     return false;
 };
 
-userSchema.methods.passwordRestToken = function () {
+userSchema.methods.RandomToken = function () {
     const token = crypto.randomBytes(64).toString("hex");
-    this.RestToken = crypto.createHash("sha256").update(token).digest("hex");
-    this.RestTokenExp = Date.now() + 10 * 60 * 1000;
+    this.Token = crypto.createHash("sha256").update(token).digest("hex");
+    this.TokenExp = Date.now() + 10 * 60 * 1000;
     return token;
 };
 
