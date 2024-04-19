@@ -4,7 +4,7 @@ const taskSchema = new mongoose.Schema({
         type: String,
         required: [true, "there must be a name"],
         tirm: [true],
-        minlength: [8, "min length for name is 8"],
+        minlength: [1, "min length for name is 8"],
     },
     createdAt: {
         type: Date,

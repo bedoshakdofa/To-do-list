@@ -30,6 +30,7 @@ const userSchema = mongoose.Schema({
         trim: true,
         required: true,
         validate: [validator.isEmail, "please enter a vaild email"],
+        unique:[true,"this email has been taken"]
     },
     gender: {
         type: String,

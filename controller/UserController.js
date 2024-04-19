@@ -42,12 +42,12 @@ exports.signup = catchAsync(async (req, res, next) => {
     });
 
     const token = newuser.RandomToken();
+    newuser.save({validateBeforeSave:false})
     const URL = `${req.protocol}://${req.get(
         "host"
     )}/api/v1/users/confirmEmail/${token}`;
     const message = `validate your Email 
-  click on this link to activate your account: ${URL}.`;
-
+    click on this link to activate your account: ${URL}.`;
     try {
         await sendEmail({
             email: newuser.email,
@@ -60,8 +60,7 @@ exports.signup = catchAsync(async (req, res, next) => {
             message: "your email has been sent check your inbox",
         });
     } catch (err) {
-        this.Token = undefined;
-        this.TokenExp = undefined;
+        await newuser.deleteOne()
         return next(
             new AppError(
                 "there was error in sending this email plz try later!!!!",
@@ -76,11 +75,13 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
         .createHash("sha256")
         .update(req.params.token)
         .digest("hex");
-    const user = await User.find({ Token: token });
+    const user = await User.findOne({ Token: token });
     if (!user) return next(new AppError(404, "this user is not found"));
     user.active = true;
     user.Token = undefined;
     user.TokenExp = undefined;
+    console.log(user);
+    await user.save({validateBeforeSave:false})
     createSendCookie(user, 200, res);
 });
 
@@ -155,12 +156,12 @@ exports.forgetpassword = catchAsync(async (req, res, next) => {
         return next(new AppError("no user found with this email ", 404));
     }
     //genrate password rest token
-    const rest_token = currantuser.passwordRestToken();
+    const rest_token = currantuser.RandomToken();
     currantuser.save({ validateBeforeSave: false });
     //creating our url
     const URL = `${req.protocol}://${req.get(
         "host"
-    )}/ap1/v1/users/restpassword/${rest_token}`;
+    )}/api/v1/users/restpassword/${rest_token}`;
     //message
     const message = `Forgot your password? 
   Submit a PATCH request with your new password and passwordConfirm to: ${URL}.
@@ -199,8 +200,8 @@ exports.restpassword = catchAsync(async (req, res, next) => {
         .digest("hex");
     //find the user depand on the token
     const currantuser = await User.findOne({
-        RestToken: hashedtoken,
-        RestTokenExp: { $gte: Date.now() },
+        Token: hashedtoken,
+        TokenExp: { $gte: Date.now() },
     });
 
     if (!currantuser) {
@@ -209,15 +210,11 @@ exports.restpassword = catchAsync(async (req, res, next) => {
     //set the new password
     currantuser.password = req.body.password;
     currantuser.passwordConfirm = req.body.passwordConfirm;
-    currantuser.RestToken = undefined;
-    currantuser.RestTokenExp = undefined;
+    currantuser.Token = undefined;
+    currantuser.TokenExp = undefined;
     await currantuser.save();
     //send the jwt token
-    const token = signToken(currantuser._id);
-    res.status(200).json({
-        status: "success",
-        token,
-    });
+    createSendCookie(currantuser,200,res)
 });
 
 exports.UpdatePassword = catchAsync(async (req, res, next) => {
@@ -235,14 +232,7 @@ exports.UpdatePassword = catchAsync(async (req, res, next) => {
     currantuser.password = req.body.password;
     currantuser.passwordConfirm = req.body.passwordConfirm;
     await currantuser.save();
-    const token = signToken(currantuser._id);
-    res.status(200).json({
-        status: "success",
-        token,
-        data: {
-            currantuser,
-        },
-    });
+    createSendCookie(currantuser,200,res)
 });
 
 exports.getMe = catchAsync(async (req, res) => {

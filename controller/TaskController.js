@@ -35,6 +35,9 @@ exports.getAllTask = catchAsync(async (req, res) => {
 exports.getOneTask = catchAsync(async (req, res, next) => {
     let query = task.findById(req.params.id).populate("userID");
     const tasks = await query;
+    if (!tasks) {
+        return next(new AppError(404,"your task not found"))
+    }
     res.status(200).json({
         status: "success",
         data: {
@@ -44,13 +47,10 @@ exports.getOneTask = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteTask = catchAsync(async (req, res) => {
-    const list = await task.deleteOne(req.params.id);
+    const list = await task.findByIdAndDelete(req.params.id);
     if (!list) return new AppError(`this id not found `, 404);
     res.status(200).json({
         status: "success",
-        data: {
-            list,
-        },
     });
 });
 
@@ -69,6 +69,7 @@ exports.updateTask = catchAsync(async (req, res) => {
 });
 
 exports.searchtasks = catchAsync(async (req, res, next) => {
+    console.log(req);
     let query;
     if (req.query.search) {
         query = {
