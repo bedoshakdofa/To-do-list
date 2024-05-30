@@ -1,5 +1,5 @@
 "# To-do-list" 
-to run the server write in cmd (npm start)
+to run the server write in cmd (npm start:prod)
 
 *hint: run npm install in cmd to install all modules required
 
