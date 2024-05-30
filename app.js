@@ -5,15 +5,12 @@ const Error = require("./controller/ErrorController");
 const userRouter = require("./Router/UserRouter");
 const tasklist = require("./Router/taskrouter");
 const cookieParser = require("cookie-parser");
-const cors=requrie('cors')
+const cors = requrie("cors");
 const app = express();
 
-app.use(cors({
-    origin:"http://localhost:9000"
-}))
+app.use(cors());
 
 if (process.env.NODE_ENV === "development") {
-
     app.use(morgan("dev"));
 }
 app.use(express.json());
