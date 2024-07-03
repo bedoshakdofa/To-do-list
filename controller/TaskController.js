@@ -1,7 +1,7 @@
 //const user = require("../models/usermodule");
 const task = require("../models/taskmodule");
-const catchAsync = require("./../utilits/catchasync");
-const AppError = require("./../utilits/AppError");
+const catchAsync = require("./../utils/catchasync");
+const AppError = require("./../utils/AppError");
 
 exports.createTask = catchAsync(async (req, res) => {
     const list = await task.create({

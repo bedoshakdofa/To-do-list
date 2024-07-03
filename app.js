@@ -1,11 +1,11 @@
 const express = require("express");
 const morgan = require("morgan");
-const AppErorr = require("./utilits/AppError");
+const AppErorr = require("./utils/AppError");
 const Error = require("./controller/ErrorController");
 const userRouter = require("./Router/UserRouter");
 const tasklist = require("./Router/taskrouter");
 const cookieParser = require("cookie-parser");
-const cors = requrie("cors");
+const cors = require("cors");
 const app = express();
 
 app.use(cors());

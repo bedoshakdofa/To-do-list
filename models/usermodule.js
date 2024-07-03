@@ -30,7 +30,7 @@ const userSchema = mongoose.Schema({
         trim: true,
         required: true,
         validate: [validator.isEmail, "please enter a vaild email"],
-        unique:[true,"this email has been taken"]
+        unique: [true, "this email has been taken"],
     },
     gender: {
         type: String,
@@ -54,10 +54,10 @@ userSchema.pre("save", async function (next) {
     this.passwordConfirm = undefined;
 });
 
-userSchema.pre(/^find/, function (next) {
-    this.find({ ative: { $ne: true } });
-    next();
-});
+// userSchema.pre(/^find/, function (next) {
+//     this.find({ ative: { $ne: true } });
+//     next();
+// });
 
 userSchema.methods.CheckPassword = async function (
     candidatePassword,

@@ -1,10 +1,10 @@
 const User = require("../models/usermodule");
 const { promisify } = require("util");
-const catchAsync = require("./../utilits/catchasync");
+const catchAsync = require("./../utils/catchasync");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const AppError = require("./../utilits/AppError");
-const sendEmail = require("./../utilits/email");
+const AppError = require("./../utils/AppError");
+const Email = require("./../utils/email");
 
 const signToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET_TOKEN, {
@@ -40,27 +40,22 @@ exports.signup = catchAsync(async (req, res, next) => {
         passwordConfirm: req.body.passwordConfirm,
         gender: req.body.gender,
     });
-
     const token = newuser.RandomToken();
-    newuser.save({validateBeforeSave:false})
+    newuser.save({ validateBeforeSave: false });
     const URL = `${req.protocol}://${req.get(
         "host"
-    )}/api/v1/users/confirmEmail/${token}`;
-    const message = `validate your Email 
-    click on this link to activate your account: ${URL}.`;
+    )}/api/v1/users//confirmEmail/${token}`;
     try {
-        await sendEmail({
-            email: newuser.email,
-            subject: "confirm your account",
-            message,
-        });
-
+        await new Email(newuser, URL).Send(
+            "confirm your email",
+            "emailconfirm"
+        );
         res.status(200).json({
             status: "success",
             message: "your email has been sent check your inbox",
         });
     } catch (err) {
-        await newuser.deleteOne()
+        await newuser.deleteOne();
         return next(
             new AppError(
                 "there was error in sending this email plz try later!!!!",
@@ -75,13 +70,13 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
         .createHash("sha256")
         .update(req.params.token)
         .digest("hex");
+
     const user = await User.findOne({ Token: token });
     if (!user) return next(new AppError(404, "this user is not found"));
     user.active = true;
     user.Token = undefined;
     user.TokenExp = undefined;
-    console.log(user);
-    await user.save({validateBeforeSave:false})
+    await user.save({ validateBeforeSave: false });
     createSendCookie(user, 200, res);
 });
 
@@ -157,32 +152,22 @@ exports.forgetpassword = catchAsync(async (req, res, next) => {
     }
     //genrate password rest token
     const rest_token = currantuser.RandomToken();
-    currantuser.save({ validateBeforeSave: false });
+    await currantuser.save({ validateBeforeSave: false });
     //creating our url
     const URL = `${req.protocol}://${req.get(
         "host"
     )}/api/v1/users/restpassword/${rest_token}`;
-    //message
-    const message = `Forgot your password? 
-  Submit a PATCH request with your new password and passwordConfirm to: ${URL}.
-  \nIf you didn't forget your password, please ignore this email!`;
-    //send the password rest token in email
-
     try {
-        await sendEmail({
-            email: currantuser.email,
-            subject: `password rest link (valid for 10 min)`,
-            message,
-        });
-
+        await new Email(currantuser, URL).Send("password Rest", "passowrdrest");
         res.status(200).json({
             status: "success",
             message: "token has been sent succssfully",
         });
     } catch (err) {
+        console.log(`this is error :${err}`);
         currantuser.RestToken = undefined;
         currantuser.RestTokenExp = undefined;
-        currantuser.save({ validateBeforeSave: false });
+        await currantuser.save({ validateBeforeSave: false });
         return next(
             new AppError(
                 "there was error in sending this email plz try later!!!!",
@@ -214,7 +199,7 @@ exports.restpassword = catchAsync(async (req, res, next) => {
     currantuser.TokenExp = undefined;
     await currantuser.save();
     //send the jwt token
-    createSendCookie(currantuser,200,res)
+    createSendCookie(currantuser, 200, res);
 });
 
 exports.UpdatePassword = catchAsync(async (req, res, next) => {
@@ -232,7 +217,7 @@ exports.UpdatePassword = catchAsync(async (req, res, next) => {
     currantuser.password = req.body.password;
     currantuser.passwordConfirm = req.body.passwordConfirm;
     await currantuser.save();
-    createSendCookie(currantuser,200,res)
+    createSendCookie(currantuser, 200, res);
 });
 
 exports.getMe = catchAsync(async (req, res) => {
