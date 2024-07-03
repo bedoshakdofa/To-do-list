@@ -151,22 +151,19 @@ exports.forgetpassword = catchAsync(async (req, res, next) => {
         return next(new AppError("no user found with this email ", 404));
     }
     //genrate password rest token
-    const rest_token = currantuser.RandomToken();
+    const otp = currantuser.generateOTP();
     await currantuser.save({ validateBeforeSave: false });
     //creating our url
-    const URL = `${req.protocol}://${req.get(
-        "host"
-    )}/api/v1/users/restpassword/${rest_token}`;
     try {
-        await new Email(currantuser, URL).Send("password Rest", "passowrdrest");
+        await new Email(currantuser, otp).Send("password Rest", "passowrdrest");
         res.status(200).json({
             status: "success",
             message: "token has been sent succssfully",
         });
     } catch (err) {
         console.log(`this is error :${err}`);
-        currantuser.RestToken = undefined;
-        currantuser.RestTokenExp = undefined;
+        currantuser.OTP = undefined;
+        currantuser.OTPExp = undefined;
         await currantuser.save({ validateBeforeSave: false });
         return next(
             new AppError(
@@ -178,15 +175,9 @@ exports.forgetpassword = catchAsync(async (req, res, next) => {
 });
 
 exports.restpassword = catchAsync(async (req, res, next) => {
-    //hashed the recived token
-    const hashedtoken = crypto
-        .createHash("sha256")
-        .update(req.params.token)
-        .digest("hex");
-    //find the user depand on the token
     const currantuser = await User.findOne({
-        Token: hashedtoken,
-        TokenExp: { $gte: Date.now() },
+        OTP: req.body.OTP,
+        OTPExp: { $gte: Date.now() },
     });
 
     if (!currantuser) {
@@ -195,8 +186,8 @@ exports.restpassword = catchAsync(async (req, res, next) => {
     //set the new password
     currantuser.password = req.body.password;
     currantuser.passwordConfirm = req.body.passwordConfirm;
-    currantuser.Token = undefined;
-    currantuser.TokenExp = undefined;
+    currantuser.OTP = undefined;
+    currantuser.OTPExp = undefined;
     await currantuser.save();
     //send the jwt token
     createSendCookie(currantuser, 200, res);

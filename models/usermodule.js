@@ -46,6 +46,8 @@ const userSchema = mongoose.Schema({
     PasswordChangeAt: Date,
     Token: String,
     TokenExp: String,
+    OTP: String,
+    OTPExp: Date,
 });
 
 userSchema.pre("save", async function (next) {
@@ -79,6 +81,13 @@ userSchema.methods.RandomToken = function () {
     this.Token = crypto.createHash("sha256").update(token).digest("hex");
     this.TokenExp = Date.now() + 10 * 60 * 1000;
     return token;
+};
+
+userSchema.methods.generateOTP = function () {
+    const otp = crypto.randomInt(100000, 999999).toString();
+    this.OTP = otp;
+    this.OTPExp = Date.now() + 10 * 60 * 1000;
+    return otp;
 };
 
 const User = mongoose.model("user", userSchema);
