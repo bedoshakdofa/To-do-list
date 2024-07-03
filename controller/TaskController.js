@@ -36,7 +36,7 @@ exports.getOneTask = catchAsync(async (req, res, next) => {
     let query = task.findById(req.params.id).populate("userID");
     const tasks = await query;
     if (!tasks) {
-        return next(new AppError(404,"your task not found"))
+        return next(new AppError(404, "your task not found"));
     }
     res.status(200).json({
         status: "success",
@@ -69,7 +69,6 @@ exports.updateTask = catchAsync(async (req, res) => {
 });
 
 exports.searchtasks = catchAsync(async (req, res, next) => {
-    console.log(req);
     let query;
     if (req.query.search) {
         query = {
