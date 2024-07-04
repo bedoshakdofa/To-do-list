@@ -77,7 +77,7 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
     user.Token = undefined;
     user.TokenExp = undefined;
     await user.save({ validateBeforeSave: false });
-    createSendCookie(user, 200, res);
+    res.redirect("https://gamgom29.github.io/My-Tasks/login");
 });
 
 exports.login = catchAsync(async (req, res, next) => {
